@@ -2,6 +2,9 @@
 set -o errexit
 set -o pipefail
 
+read -p "Enter the region: " region
+export AWS_DEFAULT_REGION=$region
+
 targets=(
   "kubectl_manifest.karpenter_resources" # karpenter node pools and classes for tidb components, like pd, tidb, tikv
   "kubectl_manifest.tidb_operator_cluster_resources" # tidb clsuter components, like pd, tidb, tikv
@@ -33,7 +36,7 @@ done
 #-------------------------------------------
 for target in "${targets[@]}"
 do
-  destroy_output=$(terraform destroy -target="$target" -auto-approve 2>&1)
+  destroy_output=$(terraform destroy -target="$target" -var="region=$region" -auto-approve 2>&1)
   if [[ $? -eq 0 && $destroy_output == *"Destroy complete!"* ]]; then
     echo "SUCCESS: Terraform destroy of $target completed successfully"
   else
@@ -45,7 +48,7 @@ done
 #-------------------------------------------
 # Terraform destroy full
 #-------------------------------------------
-destroy_output=$(terraform destroy -auto-approve 2>&1)
+destroy_output=$(terraform destroy -var="region=$region" -auto-approve 2>&1)
 if [[ $? -eq 0 && $destroy_output == *"Destroy complete!"* ]]; then
   echo "SUCCESS: Terraform destroy of all targets completed successfully"
 else
